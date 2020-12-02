@@ -58,28 +58,40 @@ fn day2(part: Part) {
         .map(|line| {
             let m = pattern.captures(line).unwrap();
             let get = |i| m.get(i).unwrap().as_str();
-            let min = get(1).parse::<u64>().unwrap();
-            let max = get(2).parse::<u64>().unwrap();
+            let num1 = get(1).parse::<u64>().unwrap();
+            let num2 = get(2).parse::<u64>().unwrap();
             let constrained_letter = get(3);
             assert!(constrained_letter.len() == 1);
             let constrained_letter = constrained_letter.chars().next().unwrap();
             let password = get(4);
 
-            (min..=max, constrained_letter, password)
+            (num1, num2, constrained_letter, password)
         })
         .collect::<Vec<_>>();
 
-    let n_valid_passwords = passwords
-        .iter()
-        .filter(|(letter_count_range, constrained_letter, password)| {
-            let mut letter_counts = HashMap::new();
-            for ch in password.chars() {
-                *letter_counts.entry(ch).or_insert(0) += 1;
-            }
-            let letter_count = letter_counts.get(&constrained_letter).copied().unwrap_or(0);
-            letter_count_range.contains(&letter_count)
-        })
-        .count();
+    let n_valid_passwords = match part {
+        Part::One => passwords
+            .iter()
+            .filter(|&&(num1, num2, constrained_letter, password)| {
+                let mut letter_counts = HashMap::new();
+                for ch in password.chars() {
+                    *letter_counts.entry(ch).or_insert(0) += 1;
+                }
+                let letter_count = letter_counts.get(&constrained_letter).copied().unwrap_or(0);
+                (num1..=num2).contains(&letter_count)
+            })
+            .count(),
+        Part::Two => {
+            passwords
+                .iter()
+                .filter(|&&(num1, num2, constrained_letter, password)| {
+                    // linear searches instead of O(1) indexing, but performance is irrelevant here
+                    let nth_ch = |n| password.chars().nth((n - 1) as usize).unwrap();
+                    (nth_ch(num1) == constrained_letter) ^ (nth_ch(num2) == constrained_letter)
+                })
+                .count()
+        }
+    };
 
     println!("{}", n_valid_passwords);
 }
@@ -89,6 +101,7 @@ fn main() {
     if false {
         day1(Part::One);
         day1(Part::Two);
+        day2(Part::One);
     }
-    day2(Part::One);
+    day2(Part::Two);
 }
