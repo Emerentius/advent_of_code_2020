@@ -96,12 +96,54 @@ fn day2(part: Part) {
     println!("{}", n_valid_passwords);
 }
 
+fn day3(part: Part) {
+    let input = include_str!("day3_input.txt");
+    let forest = input
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|ch| {
+                    assert!(ch == '.' || ch == '#');
+                    ch == '#'
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+
+    let speed_x = 3;
+    let speed_y = 1;
+
+    let mut x = 0;
+    let mut y = 0;
+
+    let forest_height = forest.len();
+    let forest_width = forest[0].len();
+
+    // would be nicer with an iterator
+    let mut tree_count = 0;
+    loop {
+        x = (x + speed_x) % forest_width;
+        y += speed_y;
+
+        if y >= forest_height {
+            break;
+        }
+        // if tree on location
+        if forest[y][x] {
+            tree_count += 1;
+        }
+    }
+
+    println!("{}", tree_count);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
         day1(Part::One);
         day1(Part::Two);
         day2(Part::One);
+        day2(Part::Two);
     }
-    day2(Part::Two);
+    day3(Part::One);
 }
