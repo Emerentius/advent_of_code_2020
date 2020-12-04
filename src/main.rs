@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 enum Part {
     One,
@@ -110,31 +110,43 @@ fn day3(part: Part) {
         })
         .collect::<Vec<_>>();
 
-    let speed_x = 3;
-    let speed_y = 1;
-
-    let mut x = 0;
-    let mut y = 0;
-
-    let forest_height = forest.len();
-    let forest_width = forest[0].len();
-
     // would be nicer with an iterator
-    let mut tree_count = 0;
-    loop {
-        x = (x + speed_x) % forest_width;
-        y += speed_y;
+    fn trees_encountered_on_slope(
+        (speed_x, speed_y): (usize, usize),
+        forest: &[Vec<bool>],
+    ) -> usize {
+        let forest_height = forest.len();
+        let forest_width = forest[0].len();
 
-        if y >= forest_height {
-            break;
+        let mut x = 0;
+        let mut y = 0;
+        let mut tree_count = 0;
+        loop {
+            x = (x + speed_x) % forest_width;
+            y += speed_y;
+
+            if y >= forest_height {
+                break;
+            }
+            // if tree on location
+            if forest[y][x] {
+                tree_count += 1;
+            }
         }
-        // if tree on location
-        if forest[y][x] {
-            tree_count += 1;
-        }
+        tree_count
     }
 
-    println!("{}", tree_count);
+    let solution = match part {
+        Part::One => trees_encountered_on_slope((3, 1), &forest),
+        Part::Two => {
+            let speeds = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
+            speeds
+                .iter()
+                .map(|&speed| trees_encountered_on_slope(speed, &forest))
+                .product()
+        }
+    };
+    println!("{}", solution);
 }
 
 fn main() {
@@ -144,6 +156,7 @@ fn main() {
         day1(Part::Two);
         day2(Part::One);
         day2(Part::Two);
+        day3(Part::One);
     }
-    day3(Part::One);
+    day3(Part::Two);
 }
