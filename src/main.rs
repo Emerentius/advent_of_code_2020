@@ -110,7 +110,6 @@ fn day3(part: Part) {
         })
         .collect::<Vec<_>>();
 
-    // would be nicer with an iterator
     fn trees_encountered_on_slope(
         (speed_x, speed_y): (usize, usize),
         forest: &[Vec<bool>],
@@ -118,22 +117,16 @@ fn day3(part: Part) {
         let forest_height = forest.len();
         let forest_width = forest[0].len();
 
-        let mut x = 0;
-        let mut y = 0;
-        let mut tree_count = 0;
-        loop {
-            x = (x + speed_x) % forest_width;
-            y += speed_y;
-
-            if y >= forest_height {
-                break;
+        let positions = std::iter::successors(Some((0, 0)), |&(x, y)| {
+            let next_x = (x + speed_x) % forest_width;
+            let next_y = y + speed_y;
+            match next_y < forest_height {
+                true => Some((next_x, next_y)),
+                false => None,
             }
-            // if tree on location
-            if forest[y][x] {
-                tree_count += 1;
-            }
-        }
-        tree_count
+        });
+        let tree_on_pos = |&(x, y): &(usize, usize)| forest[y][x];
+        positions.filter(tree_on_pos).count()
     }
 
     let solution = match part {
