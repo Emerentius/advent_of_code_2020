@@ -142,6 +142,36 @@ fn day3(part: Part) {
     println!("{}", solution);
 }
 
+fn day4(part: Part) {
+    let input = include_str!("day4_input.txt");
+
+    let required_fields = vec![
+        "byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid", /*"cid"*/
+    ];
+    // quick and dirty parsing
+    let n_valid = input
+        .split("\n\n")
+        .map(|passport| {
+            passport
+                .split_whitespace()
+                .map(|entry| {
+                    let mut iter = entry.split(":");
+                    let (key, value) = iter.next_tuple().unwrap();
+                    assert!(iter.next().is_none());
+                    (key, value)
+                })
+                .collect::<HashMap<_, _>>()
+        })
+        .filter(|entries| {
+            required_fields
+                .iter()
+                .all(|required_field| entries.contains_key(required_field))
+        })
+        .count();
+
+    println!("{}", n_valid);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -150,6 +180,7 @@ fn main() {
         day2(Part::One);
         day2(Part::Two);
         day3(Part::One);
+        day3(Part::Two);
     }
-    day3(Part::Two);
+    day4(Part::One);
 }
