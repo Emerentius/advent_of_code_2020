@@ -145,8 +145,48 @@ fn day3(part: Part) {
 fn day4(part: Part) {
     let input = include_str!("day4_input.txt");
 
-    let required_fields = vec![
-        "byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid", /*"cid"*/
+    // required field name and the corresponding validator function. Returns true, if field value is valid.
+    let required_fields: Vec<(&str, fn(&str) -> bool)> = vec![
+        ("byr", |val| {
+            val.len() == 4
+                && val
+                    .parse::<u16>()
+                    .map_or(false, |num| (1920..=2002).contains(&num))
+        }),
+        ("iyr", |val| {
+            val.len() == 4
+                && val
+                    .parse::<u16>()
+                    .map_or(false, |num| (2010..=2020).contains(&num))
+        }),
+        ("eyr", |val| {
+            val.len() == 4
+                && val
+                    .parse::<u16>()
+                    .map_or(false, |num| (2020..=2030).contains(&num))
+        }),
+        ("hgt", |val| {
+            let (num, unit) = val.split_at(val.len().saturating_sub(2));
+            num.parse::<u16>().map_or(false, |num| match unit {
+                "in" => (59..=76).contains(&num),
+                "cm" => (150..=193).contains(&num),
+                _ => false,
+            })
+        }),
+        ("hcl", |val| {
+            val.len() == 7
+                && &val[0..1] == "#"
+                && val[1..]
+                    .bytes()
+                    .all(|ch| (b'0'..=b'9').contains(&ch) || (b'a'..=b'f').contains(&ch))
+        }),
+        ("ecl", |val| {
+            let valid_colors = ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"];
+            valid_colors.contains(&val)
+        }),
+        ("pid", |val| {
+            val.len() == 9 && val.chars().all(|ch| ch.is_digit(10))
+        }), /*"cid"*/
     ];
     // quick and dirty parsing
     let n_valid = input
@@ -163,9 +203,16 @@ fn day4(part: Part) {
                 .collect::<HashMap<_, _>>()
         })
         .filter(|entries| {
+            dbg!(&entries);
             required_fields
                 .iter()
-                .all(|required_field| entries.contains_key(required_field))
+                .all(|(required_field, validator)| match part {
+                    Part::One => entries.contains_key(required_field),
+                    Part::Two => {
+                        let value = entries.get(required_field);
+                        value.copied().map_or(false, validator)
+                    }
+                })
         })
         .count();
 
@@ -181,6 +228,7 @@ fn main() {
         day2(Part::Two);
         day3(Part::One);
         day3(Part::Two);
+        day4(Part::One);
     }
-    day4(Part::One);
+    day4(Part::Two);
 }
