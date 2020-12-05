@@ -233,8 +233,22 @@ fn day5(part: Part) {
         .collect::<Vec<_>>();
     seat_ids.sort();
 
-    let max_seat_id = seat_ids.last().unwrap();
-    println!("{}", max_seat_id);
+    match part {
+        Part::One => {
+            let max_seat_id = seat_ids.last().unwrap();
+            println!("{}", max_seat_id);
+        }
+        Part::Two => {
+            let my_seat = seat_ids
+                .windows(2)
+                .find_map(|ids| match ids {
+                    &[first, next] if next == first + 2 => Some(first + 1),
+                    _ => None,
+                })
+                .unwrap();
+            println!("{}", my_seat);
+        }
+    }
 }
 
 fn main() {
@@ -248,6 +262,7 @@ fn main() {
         day3(Part::Two);
         day4(Part::One);
         day4(Part::Two);
+        day5(Part::One);
     }
-    day5(Part::One);
+    day5(Part::Two);
 }
