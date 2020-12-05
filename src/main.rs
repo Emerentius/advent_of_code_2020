@@ -219,6 +219,24 @@ fn day4(part: Part) {
     println!("{}", n_valid);
 }
 
+fn day5(part: Part) {
+    let input = include_str!("day5_input.txt");
+    // this is just a binary number with different letters.
+    // the seats are numbered left to right, front to back
+    let mut seat_ids = input
+        .replace("F", "0")
+        .replace("B", "1")
+        .replace("L", "0")
+        .replace("R", "1")
+        .lines()
+        .map(|line| usize::from_str_radix(line, 2).unwrap())
+        .collect::<Vec<_>>();
+    seat_ids.sort();
+
+    let max_seat_id = seat_ids.last().unwrap();
+    println!("{}", max_seat_id);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -229,6 +247,7 @@ fn main() {
         day3(Part::One);
         day3(Part::Two);
         day4(Part::One);
+        day4(Part::Two);
     }
-    day4(Part::Two);
+    day5(Part::One);
 }
