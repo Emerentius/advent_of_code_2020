@@ -223,15 +223,15 @@ fn day5(part: Part) {
     let input = include_str!("day5_input.txt");
     // this is just a binary number with different letters.
     // the seats are numbered left to right, front to back
-    let mut seat_ids = input
+    let seat_ids = input
         .replace("F", "0")
         .replace("B", "1")
         .replace("L", "0")
         .replace("R", "1")
         .lines()
         .map(|line| usize::from_str_radix(line, 2).unwrap())
+        .sorted()
         .collect::<Vec<_>>();
-    seat_ids.sort();
 
     match part {
         Part::One => {
