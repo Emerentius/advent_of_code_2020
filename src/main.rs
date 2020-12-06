@@ -251,6 +251,27 @@ fn day5(part: Part) {
     }
 }
 
+fn day6(part: Part) {
+    let input = include_str!("day6_input.txt");
+    // vec of questions that anyone in the group answered yes to
+    let group_answers = input
+        .split("\n\n")
+        .map(|group| {
+            let mut question_answered = [false; 26];
+            for byte in group.bytes().filter(|&byte| byte != b'\n') {
+                question_answered[(byte - b'a') as usize] = true;
+            }
+            question_answered
+        })
+        .collect::<Vec<_>>();
+
+    let solution = group_answers
+        .iter()
+        .map(|answers| answers.iter().filter(|&&answered| answered).count())
+        .sum::<usize>();
+    println!("{}", solution);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -263,6 +284,7 @@ fn main() {
         day4(Part::One);
         day4(Part::Two);
         day5(Part::One);
+        day5(Part::Two);
     }
-    day5(Part::Two);
+    day6(Part::One);
 }
