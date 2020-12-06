@@ -257,18 +257,25 @@ fn day6(part: Part) {
     let group_answers = input
         .split("\n\n")
         .map(|group| {
-            let mut question_answered = [false; 26];
-            for byte in group.bytes().filter(|&byte| byte != b'\n') {
-                question_answered[(byte - b'a') as usize] = true;
+            // bitmask
+            let answer_masks = group.lines().map(|answers| {
+                answers
+                    .bytes()
+                    .map(|byte| byte - b'a')
+                    .fold(0u32, |mask, answer| mask | 1 << answer)
+            });
+
+            match part {
+                Part::One => answer_masks.fold(0, std::ops::BitOr::bitor),
+                Part::Two => answer_masks.fold(!0, std::ops::BitAnd::bitand),
             }
-            question_answered
         })
         .collect::<Vec<_>>();
 
     let solution = group_answers
         .iter()
-        .map(|answers| answers.iter().filter(|&&answered| answered).count())
-        .sum::<usize>();
+        .map(|answers| answers.count_ones())
+        .sum::<u32>();
     println!("{}", solution);
 }
 
@@ -285,6 +292,7 @@ fn main() {
         day4(Part::Two);
         day5(Part::One);
         day5(Part::Two);
+        day6(Part::One);
     }
-    day6(Part::One);
+    day6(Part::Two);
 }
