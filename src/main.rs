@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 enum Part {
     One,
@@ -279,6 +279,104 @@ fn day6(part: Part) {
     println!("{}", solution);
 }
 
+fn day7(part: Part) {
+    let input = include_str!("day7_input.txt");
+    let pattern = regex::Regex::new(r"([a-z ]+) bags contain (.*).").unwrap();
+    let contained_pattern = regex::Regex::new(r"(\d+) ([a-z ]+) bags?").unwrap();
+    let rules = input
+        .lines()
+        .map(|line| {
+            let captures = pattern.captures(line).unwrap();
+            let containing_color = captures.get(1).unwrap().as_str();
+            let contained_color_list = captures.get(2).unwrap().as_str();
+            let contained_colors = match contained_color_list == "no other bags" {
+                // this match is technically not necessary,
+                // because the captures iter would just fail to find any matches
+                // and the vec would end up empty anyway
+                true => vec![],
+                false => contained_pattern
+                    .captures_iter(contained_color_list)
+                    .map(|contained_bags| {
+                        let number = contained_bags
+                            .get(1)
+                            .unwrap()
+                            .as_str()
+                            .parse::<u32>()
+                            .unwrap();
+                        let color = contained_bags.get(2).unwrap().as_str();
+                        (number, color)
+                    })
+                    .collect::<Vec<_>>(),
+            };
+            // sanity check, make sure we got everything by reconstructing original string
+            debug_assert!({
+                let reconstructed_contained_color_list = match contained_colors.is_empty() {
+                    true => "no other bags".to_string(),
+                    false => contained_colors
+                        .iter()
+                        .map(|&(num, color)| {
+                            format!("{} {} bag{}", num, color, if num == 1 { "" } else { "s" })
+                        })
+                        .join(", "),
+                };
+                line == &format!(
+                    "{} bags contain {}.",
+                    containing_color, reconstructed_contained_color_list
+                )
+            });
+
+            (containing_color, contained_colors)
+        })
+        .collect::<HashMap<_, _>>();
+
+    // invert the mapping
+    let mut containable_in = HashMap::new();
+    for (&color, contained_colors) in rules.iter() {
+        for &(_num, contained_color) in contained_colors {
+            containable_in
+                .entry(contained_color)
+                .or_insert(HashSet::new())
+                .insert(color);
+        }
+    }
+
+    let target_color = "shiny gold";
+    let mut potential_container_colors = HashSet::new();
+    let mut visited_container_colors = HashSet::new();
+
+    fn dfs<'a>(
+        potential_color: &'a str,
+        containable_in: &HashMap<&'a str, HashSet<&'a str>>,
+        potential_container_colors: &mut HashSet<&'a str>,
+        visited: &mut HashSet<&'a str>,
+    ) {
+        let potential_containers = match containable_in.get(potential_color) {
+            Some(containers) => containers,
+            None => return,
+        };
+        for &potential_container_color in potential_containers {
+            potential_container_colors.insert(potential_container_color);
+            if visited.insert(&potential_container_color) {
+                dfs(
+                    potential_container_color,
+                    containable_in,
+                    potential_container_colors,
+                    visited,
+                );
+            }
+        }
+    }
+
+    dfs(
+        target_color,
+        &containable_in,
+        &mut potential_container_colors,
+        &mut visited_container_colors,
+    );
+
+    println!("{}", potential_container_colors.len());
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -293,6 +391,7 @@ fn main() {
         day5(Part::One);
         day5(Part::Two);
         day6(Part::One);
+        day6(Part::Two);
     }
-    day6(Part::Two);
+    day7(Part::One);
 }
