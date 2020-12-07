@@ -329,6 +329,13 @@ fn day7(part: Part) {
         })
         .collect::<HashMap<_, _>>();
 
+    match part {
+        Part::One => day7_part1(rules),
+        Part::Two => day7_part2(rules),
+    }
+}
+
+fn day7_part1(rules: HashMap<&str, Vec<(u32, &str)>>) {
     // invert the mapping
     let mut containable_in = HashMap::new();
     for (&color, contained_colors) in rules.iter() {
@@ -377,6 +384,38 @@ fn day7(part: Part) {
     println!("{}", potential_container_colors.len());
 }
 
+fn day7_part2(rules: HashMap<&str, Vec<(u32, &str)>>) {
+    let target_color = "shiny gold";
+    let mut n_bags_contained_in_color = HashMap::new();
+
+    fn n_bags_in_bag<'a>(
+        bag_color: &'a str,
+        rules: &HashMap<&'a str, Vec<(u32, &'a str)>>,
+        n_bags_contained_in_color: &mut HashMap<&'a str, u32>,
+    ) -> u32 {
+        if let Some(&n_bags) = n_bags_contained_in_color.get(bag_color) {
+            return n_bags;
+        }
+
+        let contained_colors = match rules.get(bag_color) {
+            Some(containers) => containers,
+            None => return 0, // just the bag itself
+        };
+
+        let n_bags_in_color = contained_colors
+            .iter()
+            .map(|&(num, contained_color)| {
+                num * (1 + n_bags_in_bag(contained_color, rules, n_bags_contained_in_color))
+            })
+            .sum();
+        n_bags_contained_in_color.insert(bag_color, n_bags_in_color);
+        n_bags_in_color
+    }
+
+    let solution = n_bags_in_bag(target_color, &rules, &mut n_bags_contained_in_color);
+    println!("{}", solution);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -392,6 +431,7 @@ fn main() {
         day5(Part::Two);
         day6(Part::One);
         day6(Part::Two);
+        day7(Part::One);
     }
-    day7(Part::One);
+    day7(Part::Two);
 }
