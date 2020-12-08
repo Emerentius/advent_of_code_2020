@@ -427,23 +427,52 @@ fn day8(part: Part) {
         })
         .collect::<Vec<_>>();
 
-    let mut iptr = 0;
-    let mut acc = 0;
-    let mut previously_executed_instructions = HashSet::new();
+    // Returns the value of the accumulator after the program has either terminated (Ok)
+    // or finished the first loop (Err)
+    fn analyze_program(instructions: Vec<(&str, i32)>) -> Result<i32, i32> {
+        let mut iptr = 0;
+        let mut acc = 0;
+        let mut previously_executed_instructions = HashSet::new();
 
-    while previously_executed_instructions.insert(iptr) {
-        let (instruction, arg) = instructions[iptr as usize];
-        match instruction {
-            "acc" => {
-                acc += arg;
-                iptr += 1;
+        loop {
+            if !previously_executed_instructions.insert(iptr) {
+                return Err(acc);
             }
-            "nop" => iptr += 1,
-            "jmp" => iptr += arg,
-            _ => unreachable!(),
+            let (instruction, arg) = instructions[iptr as usize];
+            match instruction {
+                "acc" => {
+                    acc += arg;
+                    iptr += 1;
+                }
+                "nop" => iptr += 1,
+                "jmp" => iptr += arg,
+                _ => unreachable!(),
+            }
+            if iptr >= instructions.len() as i32 {
+                return Ok(acc);
+            }
         }
     }
-    println!("{}", acc);
+
+    match part {
+        Part::One => println!("{}", analyze_program(instructions).unwrap_err()),
+        Part::Two => {
+            let solution = instructions
+                .iter()
+                .enumerate()
+                .filter(|(_, &(instr, _))| instr == "jmp" || instr == "nop")
+                .find_map(|(idx, _)| {
+                    let mut instructions = instructions.clone();
+                    instructions[idx].0 = match instructions[idx].0 == "jmp" {
+                        true => "nop",
+                        false => "jmp",
+                    };
+                    analyze_program(instructions).ok()
+                })
+                .unwrap();
+            println!("{}", solution);
+        }
+    }
 }
 
 fn main() {
@@ -463,6 +492,7 @@ fn main() {
         day6(Part::Two);
         day7(Part::One);
         day7(Part::Two);
+        day8(Part::One);
     }
-    day8(Part::One);
+    day8(Part::Two);
 }
