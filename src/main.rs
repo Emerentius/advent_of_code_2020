@@ -416,6 +416,36 @@ fn day7_part2(rules: HashMap<&str, Vec<(u32, &str)>>) {
     println!("{}", solution);
 }
 
+fn day8(part: Part) {
+    let input = include_str!("day8_input.txt");
+    let instructions = input
+        .lines()
+        .map(|line| {
+            let instruction = &line[..3];
+            let arg = line[4..].parse::<i32>().unwrap();
+            (instruction, arg)
+        })
+        .collect::<Vec<_>>();
+
+    let mut iptr = 0;
+    let mut acc = 0;
+    let mut previously_executed_instructions = HashSet::new();
+
+    while previously_executed_instructions.insert(iptr) {
+        let (instruction, arg) = instructions[iptr as usize];
+        match instruction {
+            "acc" => {
+                acc += arg;
+                iptr += 1;
+            }
+            "nop" => iptr += 1,
+            "jmp" => iptr += arg,
+            _ => unreachable!(),
+        }
+    }
+    println!("{}", acc);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -432,6 +462,7 @@ fn main() {
         day6(Part::One);
         day6(Part::Two);
         day7(Part::One);
+        day7(Part::Two);
     }
-    day7(Part::Two);
+    day8(Part::One);
 }
