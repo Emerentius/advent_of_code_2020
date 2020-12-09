@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 enum Part {
     One,
@@ -475,6 +475,33 @@ fn day8(part: Part) {
     }
 }
 
+fn day9(part: Part) {
+    let input = include_str!("day9_input.txt");
+    let nums = input
+        .lines()
+        .map(|line| line.parse::<i64>().unwrap())
+        .collect::<Vec<_>>();
+
+    let mut prev_nums = nums.iter().copied().take(25).collect::<VecDeque<_>>();
+
+    let solution = nums[25..]
+        .iter()
+        .find(|&&num| {
+            let is_sum_of_prev_nums = prev_nums.iter().any(|&prev_num1| {
+                let prev_num2 = num - prev_num1;
+                // if we were looking at more than just 25 prev nums, keeping a hashset for this check
+                // would be worth it
+                prev_nums.contains(&prev_num2)
+            });
+            prev_nums.pop_front();
+            prev_nums.push_back(num);
+            !is_sum_of_prev_nums
+        })
+        .unwrap();
+
+    println!("{}", solution);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -493,6 +520,7 @@ fn main() {
         day7(Part::One);
         day7(Part::Two);
         day8(Part::One);
+        day8(Part::Two);
     }
-    day8(Part::Two);
+    day9(Part::One);
 }
