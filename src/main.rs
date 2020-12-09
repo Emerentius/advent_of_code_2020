@@ -484,7 +484,7 @@ fn day9(part: Part) {
 
     let mut prev_nums = nums.iter().copied().take(25).collect::<VecDeque<_>>();
 
-    let solution = nums[25..]
+    let invalid_num = nums[25..]
         .iter()
         .find(|&&num| {
             let is_sum_of_prev_nums = prev_nums.iter().any(|&prev_num1| {
@@ -499,7 +499,50 @@ fn day9(part: Part) {
         })
         .unwrap();
 
-    println!("{}", solution);
+    if let Part::One = part {
+        println!("{}", invalid_num);
+        return;
+    }
+
+    // all summands are positive, so making the range larger will always
+    // increase the sum
+    // => use a sliding window of varying size
+    let mut start = 0;
+    let mut end = 3;
+    let mut sum = nums[start..end].iter().sum::<i64>();
+    let range = loop {
+        if end > nums.len() {
+            unreachable!();
+        }
+        match sum.cmp(&invalid_num) {
+            // add next number to make sum bigger
+            std::cmp::Ordering::Less => {
+                sum += nums[end];
+                end += 1
+            }
+            std::cmp::Ordering::Equal => break start..end,
+            std::cmp::Ordering::Greater => {
+                if end - start > 3 {
+                    // remove number from the front to make the sum smaller
+                    sum -= nums[start];
+                    start += 1;
+                } else {
+                    // the range must have at least 2 numbers
+                    // and 2 won't ever suffice by definition of how we found the
+                    // invalid num, so it has to be at least 3
+                    // => slide window along 1 step
+                    sum -= nums[start];
+                    sum += nums[end];
+                    start += 1;
+                    end += 1;
+                }
+            }
+        }
+    };
+    let nums_in_range = nums[range].iter().copied();
+    let min = nums_in_range.clone().min().unwrap();
+    let max = nums_in_range.max().unwrap();
+    println!("{}", min + max);
 }
 
 fn main() {
@@ -521,6 +564,7 @@ fn main() {
         day7(Part::Two);
         day8(Part::One);
         day8(Part::Two);
+        day9(Part::One);
     }
-    day9(Part::One);
+    day9(Part::Two);
 }
