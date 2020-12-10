@@ -549,19 +549,38 @@ fn day10(part: Part) {
     let input = include_str!("day10_input.txt");
     let nums = input
         .lines()
-        .map(str::parse::<u32>)
+        .map(str::parse::<u64>)
         .map(Result::unwrap)
         .sorted()
         .collect::<Vec<_>>();
 
-    let mut diff_counts = HashMap::new();
-    diff_counts.insert(nums[0], 1); // from 0 to first adapter
-    diff_counts.insert(3, 1); // last step is always 3
-    for diff in nums.windows(2).map(|ratings| ratings[1] - ratings[0]) {
-        *diff_counts.entry(diff).or_insert(0) += 1;
-    }
+    match part {
+        Part::One => {
+            let mut diff_counts = HashMap::new();
+            diff_counts.insert(nums[0], 1); // from 0 to first adapter
+            diff_counts.insert(3, 1); // last step is always 3
+            for diff in nums.windows(2).map(|ratings| ratings[1] - ratings[0]) {
+                *diff_counts.entry(diff).or_insert(0) += 1;
+            }
 
-    println!("{}", diff_counts[&1] * diff_counts[&3]);
+            println!("{}", diff_counts[&1] * diff_counts[&3]);
+        }
+        Part::Two => {
+            // dynamic programming
+
+            // max adapter is 157 jolt
+            let mut n_combinations = [0; 158];
+            n_combinations[0] = 1;
+            for joltage in nums {
+                // `+=` instead of `=` in case there are duplicate adapters
+                let joltage = joltage as usize;
+                n_combinations[joltage] += n_combinations[joltage.saturating_sub(3)..joltage]
+                    .iter()
+                    .sum::<u64>();
+            }
+            println!("{}", n_combinations.last().unwrap());
+        }
+    }
 }
 
 fn main() {
@@ -585,6 +604,7 @@ fn main() {
         day8(Part::Two);
         day9(Part::One);
         day9(Part::Two);
+        day10(Part::One);
     }
-    day10(Part::One);
+    day10(Part::Two);
 }
