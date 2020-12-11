@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::{iproduct, Itertools};
 use std::collections::{HashMap, HashSet, VecDeque};
 
 enum Part {
@@ -583,6 +583,48 @@ fn day10(part: Part) {
     }
 }
 
+fn day11(part: Part) {
+    let input = include_str!("day11_input.txt");
+    let (occupied, empty, no_seat) = ('#', 'L', '.');
+    let mut seating = input.chars().filter(|&ch| ch != '\n').collect::<Vec<_>>();
+    let width = input.lines().next().unwrap().len();
+    let height = seating.len() / width;
+    debug_assert_eq!(width * height, seating.len());
+    let idx = |(row, col)| (row * width + col) as usize;
+    loop {
+        let next_seating = iproduct!(0..height, 0..width)
+            .map(|(row, col)| {
+                let prev_seating = seating[idx((row, col))];
+                if prev_seating == no_seat {
+                    return no_seat;
+                }
+
+                let row_rg = row.saturating_sub(1)..=(row + 1).min(height - 1);
+                let col_rg = col.saturating_sub(1)..=(col + 1).min(width - 1);
+                let neightbor_seats =
+                    iproduct!(row_rg, col_rg).filter(|&adj_coords| adj_coords != (row, col));
+                let neighbor_count = neightbor_seats
+                    .filter(|&coords| seating[idx(coords)] == occupied)
+                    .count();
+                match neighbor_count {
+                    0 => occupied,
+                    1..=3 => prev_seating,
+                    4..=8 => empty,
+                    _ => unreachable!(),
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if seating == next_seating {
+            break;
+        }
+
+        seating = next_seating;
+    }
+
+    println!("{}", seating.iter().filter(|&&ch| ch == occupied).count());
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -605,6 +647,7 @@ fn main() {
         day9(Part::One);
         day9(Part::Two);
         day10(Part::One);
+        day10(Part::Two);
     }
-    day10(Part::Two);
+    day11(Part::One);
 }
