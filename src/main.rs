@@ -599,17 +599,29 @@ fn day11(part: Part) {
                     return no_seat;
                 }
 
-                let row_rg = row.saturating_sub(1)..=(row + 1).min(height - 1);
-                let col_rg = col.saturating_sub(1)..=(col + 1).min(width - 1);
-                let neightbor_seats =
-                    iproduct!(row_rg, col_rg).filter(|&adj_coords| adj_coords != (row, col));
+                let neightbor_seats = iproduct!(-1i32..=1, -1i32..=1)
+                    .filter(|&step| step != (0, 0))
+                    .filter_map(|(row_step, col_step)| {
+                        let mut row = row as i32;
+                        let mut col = col as i32;
+                        std::iter::from_fn(|| {
+                            row = row + row_step;
+                            col = col + col_step;
+                            Some((row, col))
+                        })
+                        .take_while(|(row, col)| {
+                            (0..height as i32).contains(&row) && (0..width as i32).contains(&col)
+                        })
+                        .map(|(row, col)| (row as usize, col as usize))
+                        .find(|&coords| seating[idx(coords)] != no_seat)
+                    });
                 let neighbor_count = neightbor_seats
                     .filter(|&coords| seating[idx(coords)] == occupied)
                     .count();
                 match neighbor_count {
                     0 => occupied,
-                    1..=3 => prev_seating,
-                    4..=8 => empty,
+                    1..=4 => prev_seating,
+                    5..=8 => empty,
                     _ => unreachable!(),
                 }
             })
