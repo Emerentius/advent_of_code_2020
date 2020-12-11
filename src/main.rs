@@ -1,6 +1,7 @@
 use itertools::{iproduct, Itertools};
 use std::collections::{HashMap, HashSet, VecDeque};
 
+#[derive(PartialEq, Eq)]
 enum Part {
     One,
     Two,
@@ -609,6 +610,7 @@ fn day11(part: Part) {
                             col = col + col_step;
                             Some((row, col))
                         })
+                        .take(if part == Part::One { 1 } else { usize::MAX })
                         .take_while(|(row, col)| {
                             (0..height as i32).contains(&row) && (0..width as i32).contains(&col)
                         })
@@ -618,11 +620,16 @@ fn day11(part: Part) {
                 let neighbor_count = neightbor_seats
                     .filter(|&coords| seating[idx(coords)] == occupied)
                     .count();
-                match neighbor_count {
-                    0 => occupied,
-                    1..=4 => prev_seating,
-                    5..=8 => empty,
-                    _ => unreachable!(),
+
+                let unacceptable_threshold = if part == Part::One { 4 } else { 5 };
+                if neighbor_count == 0 {
+                    occupied
+                } else if neighbor_count < unacceptable_threshold {
+                    prev_seating
+                } else if neighbor_count <= 8 {
+                    empty
+                } else {
+                    unreachable!();
                 }
             })
             .collect::<Vec<_>>();
@@ -660,6 +667,7 @@ fn main() {
         day9(Part::Two);
         day10(Part::One);
         day10(Part::Two);
+        day11(Part::One);
     }
-    day11(Part::One);
+    day11(Part::Two);
 }
