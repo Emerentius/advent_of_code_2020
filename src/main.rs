@@ -650,6 +650,13 @@ fn day12(part: Part) {
         .lines()
         .map(|line| (&line[..1], line[1..].parse::<i32>().unwrap()));
 
+    match part {
+        Part::One => day12_part1(instructions),
+        Part::Two => day12_part2(instructions),
+    }
+}
+
+fn day12_part1(instructions: impl Iterator<Item = (&'static str, i32)>) {
     let (mut x, mut y) = (0, 0);
     // 0 == north, 1 == east, 2 == south, 3 == west
     let mut heading = 1;
@@ -679,6 +686,40 @@ fn day12(part: Part) {
     println!("{}", x.abs() + y.abs());
 }
 
+fn day12_part2(instructions: impl Iterator<Item = (&'static str, i32)>) {
+    use nalgebra::{Matrix2, Vector2};
+    let mut pos = Vector2::new(0, 0);
+    let mut waypoint = Vector2::new(10, 1);
+    let rot_right = Matrix2::new(0, -1, 1, 0);
+    let rot_left = Matrix2::new(0, 1, -1, 0);
+    let apply_n_times = |matrix, mut vec, n| {
+        assert!(n > 0);
+        // there doesn't seem to be a matrix.pow() method in nalgebra
+        // for integer matrices
+        for _ in 0..n {
+            vec = matrix * vec;
+        }
+        vec
+    };
+
+    for (instruction, num) in instructions {
+        assert!(num >= 0);
+
+        match instruction {
+            "N" => waypoint.y += num,
+            "S" => waypoint.y -= num,
+            "E" => waypoint.x += num,
+            "W" => waypoint.x -= num,
+            "L" => waypoint = apply_n_times(rot_right, waypoint, num / 90),
+            "R" => waypoint = apply_n_times(rot_left, waypoint, num / 90),
+            "F" => pos += num * waypoint,
+            _ => unreachable!(),
+        }
+    }
+
+    println!("{}", pos.x.abs() + pos.y.abs());
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -704,6 +745,7 @@ fn main() {
         day10(Part::Two);
         day11(Part::One);
         day11(Part::Two);
+        day12(Part::One);
     }
-    day12(Part::One);
+    day12(Part::Two);
 }
