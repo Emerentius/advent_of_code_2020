@@ -644,6 +644,41 @@ fn day11(part: Part) {
     println!("{}", seating.iter().filter(|&&ch| ch == occupied).count());
 }
 
+fn day12(part: Part) {
+    let input = include_str!("day12_input.txt");
+    let instructions = input
+        .lines()
+        .map(|line| (&line[..1], line[1..].parse::<i32>().unwrap()));
+
+    let (mut x, mut y) = (0, 0);
+    // 0 == north, 1 == east, 2 == south, 3 == west
+    let mut heading = 1;
+    for (mut instruction, num) in instructions {
+        assert!(num >= 0);
+        if instruction == "F" {
+            instruction = match heading {
+                0 => "N",
+                1 => "E",
+                2 => "S",
+                3 => "W",
+                _ => unreachable!(),
+            }
+        }
+
+        match instruction {
+            "N" => y += num,
+            "S" => y -= num,
+            "E" => x += num,
+            "W" => x -= num,
+            "L" => heading = (heading - num / 90).rem_euclid(4),
+            "R" => heading = (heading + num / 90).rem_euclid(4),
+            _ => unreachable!(),
+        }
+    }
+
+    println!("{}", x.abs() + y.abs());
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -668,6 +703,7 @@ fn main() {
         day10(Part::One);
         day10(Part::Two);
         day11(Part::One);
+        day11(Part::Two);
     }
-    day11(Part::Two);
+    day12(Part::One);
 }
