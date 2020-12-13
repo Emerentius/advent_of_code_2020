@@ -720,6 +720,29 @@ fn day12_part2(instructions: impl Iterator<Item = (&'static str, i32)>) {
     println!("{}", pos.x.abs() + pos.y.abs());
 }
 
+fn day13(part: Part) {
+    let input = include_str!("day13_input.txt");
+    let mut lines = input.lines();
+    let min_timestamp = lines.next().unwrap().parse::<i32>().unwrap();
+    let bus_times = lines
+        .next()
+        .unwrap()
+        .split(',')
+        .filter(|&time| time != "x")
+        .map(|time| time.parse::<i32>().unwrap())
+        .collect::<Vec<_>>();
+    let (bus_id, next_arrival) = bus_times
+        .iter()
+        .map(|&time| {
+            let next_arrival = (min_timestamp + time - 1) / time * time;
+            (time, next_arrival - min_timestamp)
+        })
+        .min_by_key(|&(_, next_arrival)| next_arrival)
+        .unwrap();
+
+    println!("{}", bus_id * next_arrival);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -746,6 +769,7 @@ fn main() {
         day11(Part::One);
         day11(Part::Two);
         day12(Part::One);
+        day12(Part::Two);
     }
-    day12(Part::Two);
+    day13(Part::One);
 }
