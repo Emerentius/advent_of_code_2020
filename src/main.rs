@@ -723,24 +723,55 @@ fn day12_part2(instructions: impl Iterator<Item = (&'static str, i32)>) {
 fn day13(part: Part) {
     let input = include_str!("day13_input.txt");
     let mut lines = input.lines();
-    let min_timestamp = lines.next().unwrap().parse::<i32>().unwrap();
+    let min_timestamp = lines.next().unwrap().parse::<i64>().unwrap();
     let bus_times = lines
         .next()
         .unwrap()
         .split(',')
-        .filter(|&time| time != "x")
-        .map(|time| time.parse::<i32>().unwrap())
+        .enumerate()
+        .filter(|&(_, time)| time != "x")
+        .map(|(offset, time)| (offset, time.parse::<i64>().unwrap()))
+        .sorted_by_key(|&(_, time)| std::cmp::Reverse(time))
         .collect::<Vec<_>>();
-    let (bus_id, next_arrival) = bus_times
-        .iter()
-        .map(|&time| {
-            let next_arrival = (min_timestamp + time - 1) / time * time;
-            (time, next_arrival - min_timestamp)
-        })
-        .min_by_key(|&(_, next_arrival)| next_arrival)
-        .unwrap();
 
-    println!("{}", bus_id * next_arrival);
+    match part {
+        Part::One => {
+            let (bus_id, next_arrival) = bus_times
+                .iter()
+                .map(|&(_, time)| {
+                    let next_arrival = (min_timestamp + time - 1) / time * time;
+                    (time, next_arrival - min_timestamp)
+                })
+                .min_by_key(|&(_, next_arrival)| next_arrival)
+                .unwrap();
+
+            println!("{}", bus_id * next_arrival);
+        }
+        Part::Two => {
+            // all the ids are pairwise coprime (because they are prime)
+            // so we can use the chinese remainder theorem
+
+            // t + offset_0 = 0 (mod bus_period_0)
+            // t + offset_1 = 0 (mod bus_period_1)
+            // etc...
+            // equivalent to
+            // t = -offset_i = bus_period_i - offset_i  (mod bus_period_i)
+
+            // sieving
+            let (offset, time) = bus_times[0];
+            let mut solution = time as usize - offset;
+            let mut multiple = time as usize;
+            for &(offset, time) in &bus_times[1..] {
+                solution = (solution..)
+                    .step_by(multiple)
+                    .find(|num| (num + offset) % time as usize == 0)
+                    .unwrap();
+                multiple *= time as usize;
+            }
+
+            println!("{}", solution);
+        }
+    }
 }
 
 fn main() {
@@ -770,6 +801,7 @@ fn main() {
         day11(Part::Two);
         day12(Part::One);
         day12(Part::Two);
+        day13(Part::One);
     }
-    day13(Part::One);
+    day13(Part::Two);
 }
