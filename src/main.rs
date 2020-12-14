@@ -774,6 +774,47 @@ fn day13(part: Part) {
     }
 }
 
+fn day14(part: Part) {
+    let input = include_str!("day14_input.txt");
+    let mut mask_positions = 0u64;
+    let mut mask_bits = 0u64;
+    let mut mem = vec![0; 100_000];
+
+    let mem_pattern = regex::Regex::new(r"mem\[(\d+)\] = (\d+)").unwrap();
+    for line in input.lines() {
+        if line.starts_with("mask") {
+            let new_mask = &line[7..];
+            mask_positions = 0;
+            mask_bits = 0;
+
+            for (i, ch) in new_mask
+                .chars()
+                .rev()
+                .enumerate()
+                .map(|(i, ch)| (i as u32, ch))
+            {
+                match ch {
+                    'X' => (),
+                    '1' | '0' => {
+                        mask_positions |= 1 << i;
+                        mask_bits |= (ch.to_digit(2).unwrap() as u64) << i;
+                    }
+                    _ => unreachable!(),
+                };
+            }
+        } else {
+            let captures = mem_pattern.captures(line).unwrap();
+            let pos = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
+            let num = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+            let val_to_write = (num & !mask_positions) | mask_bits;
+
+            mem[pos] = val_to_write;
+        }
+    }
+
+    println!("{}", mem.iter().sum::<u64>());
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -802,6 +843,8 @@ fn main() {
         day12(Part::One);
         day12(Part::Two);
         day13(Part::One);
+        day13(Part::Two);
     }
-    day13(Part::Two);
+
+    day14(Part::One)
 }
