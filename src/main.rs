@@ -778,7 +778,7 @@ fn day14(part: Part) {
     let input = include_str!("day14_input.txt");
     let mut mask_positions = 0u64;
     let mut mask_bits = 0u64;
-    let mut mem = vec![0; 100_000];
+    let mut mem = HashMap::new();
 
     let mem_pattern = regex::Regex::new(r"mem\[(\d+)\] = (\d+)").unwrap();
     for line in input.lines() {
@@ -804,15 +804,44 @@ fn day14(part: Part) {
             }
         } else {
             let captures = mem_pattern.captures(line).unwrap();
-            let pos = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
+            let pos = captures.get(1).unwrap().as_str().parse::<u64>().unwrap();
             let num = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
-            let val_to_write = (num & !mask_positions) | mask_bits;
 
-            mem[pos] = val_to_write;
+            match part {
+                Part::One => {
+                    let val_to_write = (num & !mask_positions) | mask_bits;
+
+                    *mem.entry(pos).or_insert(0) = val_to_write;
+                }
+                Part::Two => {
+                    let pos = (pos & mask_positions) | mask_bits;
+
+                    // computing all the masks from the floating bits.
+                    // this should actually be done when reading in the masks, but I'm not changing
+                    // data structures.
+                    let floating_bits = !mask_positions;
+                    let floating_bits = (0..36).filter(|pos| floating_bits & 1 << pos != 0);
+
+                    let n_floating = floating_bits.clone().count();
+
+                    for choice in 0..2u64.pow(n_floating as u32) {
+                        let mask = floating_bits
+                            .clone()
+                            .enumerate()
+                            .map(|(floating_bit_num, floating_bit_pos)| {
+                                let choice = choice & 1 << floating_bit_num != 0;
+                                (choice as u64) << floating_bit_pos
+                            })
+                            .fold(0, std::ops::BitOr::bitor);
+
+                        *mem.entry(pos | mask).or_insert(0) = num;
+                    }
+                }
+            }
         }
     }
 
-    println!("{}", mem.iter().sum::<u64>());
+    println!("{}", mem.values().sum::<u64>());
 }
 
 fn main() {
@@ -844,7 +873,7 @@ fn main() {
         day12(Part::Two);
         day13(Part::One);
         day13(Part::Two);
+        day14(Part::One);
     }
-
-    day14(Part::One)
+    day14(Part::Two);
 }
