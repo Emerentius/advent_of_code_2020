@@ -875,8 +875,12 @@ fn day15(part: Part) {
     });
     let mut iter = first.chain(following);
 
+    let nth = match part {
+        Part::One => 2020,
+        Part::Two => 30_000_000,
+    };
     // -1 because it's 0 based
-    println!("{}", iter.nth(2020 - 1).unwrap());
+    println!("{}", iter.nth(nth - 1).unwrap());
 }
 
 fn main() {
@@ -910,6 +914,7 @@ fn main() {
         day13(Part::Two);
         day14(Part::One);
         day14(Part::Two);
+        day15(Part::One);
     }
-    day15(Part::One);
+    day15(Part::Two);
 }
