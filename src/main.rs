@@ -844,6 +844,41 @@ fn day14(part: Part) {
     println!("{}", mem.values().sum::<u64>());
 }
 
+fn day15(part: Part) {
+    let input = vec![14, 3, 1, 0, 9, 5];
+    // let input = vec![0, 3, 6];
+    let mut prev_seen = HashMap::new();
+
+    for (i, &num) in input[..input.len()-1].iter().enumerate() {
+        prev_seen.insert(num, vec![i]);
+    }
+
+    let mut pos = input.len() - 1;
+    let mut next_num = *input.last().unwrap();
+    let first = input.iter().copied().take(prev_seen.len());
+    let following = std::iter::from_fn(|| {
+        use std::collections::hash_map::Entry;
+        let new_next = match prev_seen.entry(next_num) {
+            Entry::Occupied(mut o) => {
+                let prev_locations = o.get_mut();
+                let last_seen_pos = *prev_locations.last().unwrap();
+                prev_locations.push(pos);
+                pos - last_seen_pos
+            }
+            Entry::Vacant(v) => {
+                v.insert(vec![pos]);
+                0
+            }
+        };
+        pos += 1;
+        Some(std::mem::replace(&mut next_num, new_next))
+    });
+    let mut iter = first.chain(following);
+
+    // -1 because it's 0 based
+    println!("{}", iter.nth(2020 - 1).unwrap());
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -874,6 +909,7 @@ fn main() {
         day13(Part::One);
         day13(Part::Two);
         day14(Part::One);
+        day14(Part::Two);
     }
-    day14(Part::Two);
+    day15(Part::One);
 }
