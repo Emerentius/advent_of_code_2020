@@ -849,8 +849,8 @@ fn day15(part: Part) {
     // let input = vec![0, 3, 6];
     let mut prev_seen = HashMap::new();
 
-    for (i, &num) in input[..input.len()-1].iter().enumerate() {
-        prev_seen.insert(num, vec![i]);
+    for (i, &num) in input[..input.len() - 1].iter().enumerate() {
+        prev_seen.insert(num, i);
     }
 
     let mut pos = input.len() - 1;
@@ -860,13 +860,11 @@ fn day15(part: Part) {
         use std::collections::hash_map::Entry;
         let new_next = match prev_seen.entry(next_num) {
             Entry::Occupied(mut o) => {
-                let prev_locations = o.get_mut();
-                let last_seen_pos = *prev_locations.last().unwrap();
-                prev_locations.push(pos);
-                pos - last_seen_pos
+                let last_seen_pos = o.get_mut();
+                pos - std::mem::replace(last_seen_pos, pos)
             }
             Entry::Vacant(v) => {
-                v.insert(vec![pos]);
+                v.insert(pos);
                 0
             }
         };
