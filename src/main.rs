@@ -881,6 +881,46 @@ fn day15(part: Part) {
     println!("{}", iter.nth(nth - 1).unwrap());
 }
 
+fn day16(part: Part) {
+    let input = include_str!("day16_input.txt");
+    let mut blocks = input.split("\n\n");
+    let conditions = blocks.next().unwrap();
+    let my_ticket = blocks.next().unwrap();
+    let other_tickets = blocks.next().unwrap();
+
+    let condition_pattern = regex::Regex::new(r"([a-z ]+): (\d+)-(\d+) or (\d+)-(\d+)").unwrap();
+    let valid_ranges = conditions
+        .lines()
+        .skip(1)
+        .flat_map(|condition| {
+            let captures = condition_pattern.captures(condition).unwrap();
+
+            let name = captures.get(1).unwrap().as_str();
+            let get_num = |group_num| {
+                captures
+                    .get(group_num)
+                    .unwrap()
+                    .as_str()
+                    .parse::<u64>()
+                    .unwrap()
+            };
+            vec![get_num(2)..=get_num(3), get_num(4)..=get_num(5)]
+        })
+        .collect::<Vec<_>>();
+
+    let mut error_rate = 0;
+    other_tickets.lines().skip(1).for_each(|line| {
+        line.split(",").for_each(|num| {
+            let num = num.parse::<u64>().unwrap();
+            if !valid_ranges.iter().any(|rg| rg.contains(&num)) {
+                error_rate += num;
+            }
+        })
+    });
+
+    println!("{}", error_rate);
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -913,6 +953,7 @@ fn main() {
         day14(Part::One);
         day14(Part::Two);
         day15(Part::One);
+        day15(Part::Two);
     }
-    day15(Part::Two);
+    day16(Part::One);
 }
