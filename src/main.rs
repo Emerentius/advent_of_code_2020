@@ -888,11 +888,11 @@ fn day16(part: Part) {
     let my_ticket = blocks.next().unwrap();
     let other_tickets = blocks.next().unwrap();
 
-    let condition_pattern = regex::Regex::new(r"([a-z ]+): (\d+)-(\d+) or (\d+)-(\d+)").unwrap();
-    let valid_ranges = conditions
+    let condition_pattern = regex::Regex::new(r"([a-z ]+): (\d+)-(\d+) or (\d+)-(\d+)$").unwrap();
+    let fields = conditions
         .lines()
-        .skip(1)
-        .flat_map(|condition| {
+        //.skip(1)
+        .map(|condition| {
             let captures = condition_pattern.captures(condition).unwrap();
 
             let name = captures.get(1).unwrap().as_str();
@@ -904,21 +904,210 @@ fn day16(part: Part) {
                     .parse::<u64>()
                     .unwrap()
             };
-            vec![get_num(2)..=get_num(3), get_num(4)..=get_num(5)]
+            (name, [get_num(2)..=get_num(3), get_num(4)..=get_num(5)])
         })
         .collect::<Vec<_>>();
 
-    let mut error_rate = 0;
-    other_tickets.lines().skip(1).for_each(|line| {
-        line.split(",").for_each(|num| {
-            let num = num.parse::<u64>().unwrap();
-            if !valid_ranges.iter().any(|rg| rg.contains(&num)) {
-                error_rate += num;
-            }
-        })
-    });
+    let parse_ticket = |ticket: &str| -> Result<Vec<u64>, u64> {
+        let mut error_rate = 0;
+        ticket
+            .split(",")
+            .map(|num| {
+                let num = num.parse::<u64>().unwrap();
+                let all_valid = fields
+                    .iter()
+                    .flat_map(|(_, valid_ranges)| valid_ranges)
+                    .any(|rg| rg.contains(&num));
+                match all_valid {
+                    true => Some(num),
+                    false => {
+                        error_rate += num;
+                        None
+                    }
+                }
+            })
+            .collect::<Option<Vec<_>>>()
+            .ok_or(error_rate)
+    };
 
-    println!("{}", error_rate);
+    let mut error_rate = 0;
+    let valid_tickets = other_tickets
+        .lines()
+        .skip(1)
+        .chain(my_ticket.lines().skip(1))
+        .filter_map(|line| {
+            // keep only valid lines and parse them into vecs of nums
+
+            match parse_ticket(line) {
+                Ok(vals) => Some(vals),
+                Err(errors) => {
+                    error_rate += errors;
+                    None
+                }
+            }
+            // line.split(",")
+            //     .map(|num| {
+            //         let num = num.parse::<u64>().unwrap();
+            //         let all_valid = fields
+            //             .iter()
+            //             .flat_map(|(_, valid_ranges)| valid_ranges)
+            //             .any(|rg| rg.contains(&num));
+            //         match all_valid {
+            //             true => Some(num),
+            //             false => {
+            //                 error_rate += num;
+            //                 None
+            //             }
+            //         }
+            //     })
+            //     .collect::<Option<Vec<_>>>()
+        })
+        .collect::<Vec<_>>();
+
+    let n_fields = valid_tickets[0].len();
+    let mut unsolved_field_nums = (0..n_fields)
+        .map(|field_num| {
+            let possible_fields = fields
+                .iter()
+                .filter(|(name, ranges)| {
+                    valid_tickets
+                        .iter()
+                        .map(|ticket_fields| ticket_fields[field_num])
+                        .all(|num| ranges.iter().any(|rg| rg.contains(&num)))
+                })
+                .map(|(name, _)| name)
+                .collect::<HashSet<_>>();
+            (field_num, possible_fields)
+        })
+        .collect::<HashMap<_, _>>();
+
+    //println!("{:#?}", fields);
+
+    //panic!("{:#?}", unsolved_field_nums);
+    let mut field_to_num = HashMap::new();
+    while field_to_num.len() != n_fields {
+        //==
+        let mut new_uniques = vec![];
+
+        // positions where only 1 field is valid for all tickets
+        for unique_by_field in
+            unsolved_field_nums
+                .iter()
+                .filter_map(|(field_num, possible_fields)| {
+                    if possible_fields.len() == 1 {
+                        println!(
+                            "unique by field: {} => {}",
+                            field_num,
+                            *possible_fields.iter().next().unwrap()
+                        );
+                        Some((*field_num, **possible_fields.iter().next().unwrap()))
+                    } else {
+                        None
+                    }
+                })
+        {
+            new_uniques.push(unique_by_field);
+        }
+
+        // fields where only 1 position is valid for all tickets
+        let unsolved_fields = fields
+            .iter()
+            .filter(|(field_name, _)| !field_to_num.contains_key(field_name))
+            .map(|&(name, _)| name);
+        for unique_by_position in unsolved_fields.filter_map(|name| {
+            let possible_positions = unsolved_field_nums
+                .iter()
+                .filter(|&(_, possible_fields)| possible_fields.contains(&name))
+                .map(|(&field_num, _)| field_num)
+                .collect::<Vec<_>>();
+            if possible_positions.len() == 1 {
+                Some((possible_positions[0], name))
+            } else {
+                None
+            }
+        }) {
+            new_uniques.push(unique_by_position);
+        }
+
+        //==
+
+        // // positions where only 1 field is valid for all tickets
+        // let unique_by_field =
+        //     unsolved_field_nums
+        //         .iter()
+        //         .filter_map(|(field_num, possible_fields)| {
+        //             if possible_fields.len() == 1 {
+        //                 Some((*field_num, **possible_fields.iter().next().unwrap()))
+        //             } else {
+        //                 None
+        //             }
+        //         });
+
+        // // fields where only 1 position is valid for all tickets
+        // let unsolved_fields = fields
+        //     .iter()
+        //     .filter(|(field_name, _)| !field_to_num.contains_key(field_name))
+        //     .map(|&(name, _)| name);
+        // let unique_by_position = unsolved_fields.filter_map(|name| {
+        //     let possible_positions = unsolved_field_nums
+        //         .iter()
+        //         .filter(|&(_, possible_fields)| possible_fields.contains(&name))
+        //         .map(|(&field_num, _)| field_num)
+        //         .collect::<Vec<_>>();
+        //     if possible_positions.len() == 1 {
+        //         Some((possible_positions[0], name))
+        //     } else {
+        //         None
+        //     }
+        // });
+
+        // let new_uniques = unique_by_field
+        //     .chain(unique_by_position)
+        //     .collect::<Vec<_>>();
+        let n_unique = new_uniques.len();
+
+        let old_unsolved = unsolved_field_nums.clone();
+        for &(field_num, field_name) in &new_uniques {
+            field_to_num.insert(field_name, field_num);
+            unsolved_field_nums.remove(&field_num);
+            for possible_fields in unsolved_field_nums.values_mut() {
+                possible_fields.remove(&field_name);
+            }
+        }
+        if field_to_num.len() + unsolved_field_nums.len() != 20 {
+            println!("{:?}", new_uniques);
+            println!("{:#?}", old_unsolved);
+            //panic!();
+        }
+
+        println!(
+            "previously found: {}, newly found: {}, left: {}",
+            field_to_num.len(),
+            n_unique,
+            unsolved_field_nums.len(),
+        );
+
+        if n_unique == 0 {
+            println!("{:#?}", unsolved_field_nums);
+        }
+        assert!(n_unique != 0);
+    }
+
+    //println!("{:#?}", field_to_num);
+
+    match part {
+        Part::One => println!("{}", error_rate),
+        Part::Two => {
+            let my_ticket = parse_ticket(my_ticket.lines().skip(1).next().unwrap()).unwrap();
+            let solution = field_to_num
+                .iter()
+                .filter(|(name, _)| name.starts_with("departure"))
+                .map(|(_, field_num)| field_num)
+                .map(|&num| my_ticket[num as usize])
+                .product::<u64>();
+            println!("{}", solution);
+        }
+    }
 }
 
 fn main() {
@@ -954,6 +1143,7 @@ fn main() {
         day14(Part::Two);
         day15(Part::One);
         day15(Part::Two);
+        day16(Part::One);
     }
-    day16(Part::One);
+    day16(Part::Two);
 }
