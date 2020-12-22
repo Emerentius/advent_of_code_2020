@@ -947,6 +947,17 @@ fn day16(part: Part) {
         })
         .collect::<Vec<_>>();
 
+    // Algorithm for part 2:
+    // Imagine a boolean (sparse) matrix of field positions (indicated by a number) <-> fields (indicated by a name)
+    // where `matrix[field, position] == true` if the field could be at the position, i.e. all tickets
+    // have data at that position which is valid for the field.
+    // If any row or column has only a single true entry, then that pairing MUST be correct
+    // and we can remove the row and column from the matrix and repeat the procedure until everything has been
+    // deduced.
+    //
+    // The matrix is implemented here through a HashMap<FieldPosition (== usize), HashSet<FieldName (== &str)>>
+    // which could surely be implemented more concisely and with more clarity but I've spent enough time here already.
+
     let n_fields = valid_tickets[0].len();
     let mut unsolved_field_nums = (0..n_fields)
         .map(|field_num| {
