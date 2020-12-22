@@ -891,7 +891,6 @@ fn day16(part: Part) {
     let condition_pattern = regex::Regex::new(r"([a-z ]+): (\d+)-(\d+) or (\d+)-(\d+)$").unwrap();
     let fields = conditions
         .lines()
-        //.skip(1)
         .map(|condition| {
             let captures = condition_pattern.captures(condition).unwrap();
 
@@ -945,22 +944,6 @@ fn day16(part: Part) {
                     None
                 }
             }
-            // line.split(",")
-            //     .map(|num| {
-            //         let num = num.parse::<u64>().unwrap();
-            //         let all_valid = fields
-            //             .iter()
-            //             .flat_map(|(_, valid_ranges)| valid_ranges)
-            //             .any(|rg| rg.contains(&num));
-            //         match all_valid {
-            //             true => Some(num),
-            //             false => {
-            //                 error_rate += num;
-            //                 None
-            //             }
-            //         }
-            //     })
-            //     .collect::<Option<Vec<_>>>()
         })
         .collect::<Vec<_>>();
 
@@ -969,7 +952,7 @@ fn day16(part: Part) {
         .map(|field_num| {
             let possible_fields = fields
                 .iter()
-                .filter(|(name, ranges)| {
+                .filter(|(_, ranges)| {
                     valid_tickets
                         .iter()
                         .map(|ticket_fields| ticket_fields[field_num])
@@ -981,40 +964,26 @@ fn day16(part: Part) {
         })
         .collect::<HashMap<_, _>>();
 
-    //println!("{:#?}", fields);
-
-    //panic!("{:#?}", unsolved_field_nums);
     let mut field_to_num = HashMap::new();
     while field_to_num.len() != n_fields {
-        //==
-        let mut new_uniques = vec![];
-
         // positions where only 1 field is valid for all tickets
-        for unique_by_field in
+        let unique_by_field =
             unsolved_field_nums
                 .iter()
                 .filter_map(|(field_num, possible_fields)| {
                     if possible_fields.len() == 1 {
-                        println!(
-                            "unique by field: {} => {}",
-                            field_num,
-                            *possible_fields.iter().next().unwrap()
-                        );
                         Some((*field_num, **possible_fields.iter().next().unwrap()))
                     } else {
                         None
                     }
-                })
-        {
-            new_uniques.push(unique_by_field);
-        }
+                });
 
         // fields where only 1 position is valid for all tickets
         let unsolved_fields = fields
             .iter()
             .filter(|(field_name, _)| !field_to_num.contains_key(field_name))
             .map(|&(name, _)| name);
-        for unique_by_position in unsolved_fields.filter_map(|name| {
+        let unique_by_position = unsolved_fields.filter_map(|name| {
             let possible_positions = unsolved_field_nums
                 .iter()
                 .filter(|&(_, possible_fields)| possible_fields.contains(&name))
@@ -1025,48 +994,13 @@ fn day16(part: Part) {
             } else {
                 None
             }
-        }) {
-            new_uniques.push(unique_by_position);
-        }
+        });
 
-        //==
-
-        // // positions where only 1 field is valid for all tickets
-        // let unique_by_field =
-        //     unsolved_field_nums
-        //         .iter()
-        //         .filter_map(|(field_num, possible_fields)| {
-        //             if possible_fields.len() == 1 {
-        //                 Some((*field_num, **possible_fields.iter().next().unwrap()))
-        //             } else {
-        //                 None
-        //             }
-        //         });
-
-        // // fields where only 1 position is valid for all tickets
-        // let unsolved_fields = fields
-        //     .iter()
-        //     .filter(|(field_name, _)| !field_to_num.contains_key(field_name))
-        //     .map(|&(name, _)| name);
-        // let unique_by_position = unsolved_fields.filter_map(|name| {
-        //     let possible_positions = unsolved_field_nums
-        //         .iter()
-        //         .filter(|&(_, possible_fields)| possible_fields.contains(&name))
-        //         .map(|(&field_num, _)| field_num)
-        //         .collect::<Vec<_>>();
-        //     if possible_positions.len() == 1 {
-        //         Some((possible_positions[0], name))
-        //     } else {
-        //         None
-        //     }
-        // });
-
-        // let new_uniques = unique_by_field
-        //     .chain(unique_by_position)
-        //     .collect::<Vec<_>>();
+        let new_uniques = unique_by_field
+            .chain(unique_by_position)
+            .collect::<Vec<_>>();
         let n_unique = new_uniques.len();
 
-        let old_unsolved = unsolved_field_nums.clone();
         for &(field_num, field_name) in &new_uniques {
             field_to_num.insert(field_name, field_num);
             unsolved_field_nums.remove(&field_num);
@@ -1074,26 +1008,9 @@ fn day16(part: Part) {
                 possible_fields.remove(&field_name);
             }
         }
-        if field_to_num.len() + unsolved_field_nums.len() != 20 {
-            println!("{:?}", new_uniques);
-            println!("{:#?}", old_unsolved);
-            //panic!();
-        }
 
-        println!(
-            "previously found: {}, newly found: {}, left: {}",
-            field_to_num.len(),
-            n_unique,
-            unsolved_field_nums.len(),
-        );
-
-        if n_unique == 0 {
-            println!("{:#?}", unsolved_field_nums);
-        }
         assert!(n_unique != 0);
     }
-
-    //println!("{:#?}", field_to_num);
 
     match part {
         Part::One => println!("{}", error_rate),
