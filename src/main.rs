@@ -1065,26 +1065,30 @@ fn day17(part: Part) {
     let grid_width = n_width + 2 * offset;
     let grid_height = n_height + 2 * offset;
     let grid_depth = n_depth + 2 * offset;
-    let mut grid = vec![vec![vec![false; grid_depth]; grid_height]; grid_width];
+    let mut grid = vec![vec![vec![vec![false; grid_depth]; grid_depth]; grid_height]; grid_width];
 
     for (y, row) in input.iter().enumerate() {
         for (x, &is_active) in row.iter().enumerate() {
-            grid[x + offset][y + offset][offset] = is_active;
+            grid[x + offset][y + offset][offset][offset] = is_active;
         }
     }
 
     let mut next_grid = grid.clone();
     for _ in 0..n_cycles {
-        for (x, y, z) in
-            itertools::iproduct!(1..grid_width - 1, 1..grid_height - 1, 1..grid_depth - 1)
+        for (x, y, z, zz) in
+            itertools::iproduct!(1..grid_width - 1, 1..grid_height - 1, 1..grid_depth - 1, 1..grid_depth-1)
+            .filter(|&(_, _,_, zz)| zz == offset || part == Part::Two)
         {
             let n_neighbors_active =
-                itertools::iproduct!(x - 1..=x + 1, y - 1..=y + 1, z - 1..=z + 1)
-                    .filter(|&neighbor_pos| neighbor_pos != (x, y, z))
-                    .filter(|&(x, y, z)| grid[x][y][z])
+                itertools::iproduct!(x - 1..=x + 1, y - 1..=y + 1, z - 1..=z + 1, zz - 1..=zz+1)
+                    .filter(|&(_,_,_, zz)| {
+                        zz == offset || part == Part::Two // 4D sim only for part 2
+                    })
+                    .filter(|&neighbor_pos| neighbor_pos != (x, y, z, zz))
+                    .filter(|&(x, y, z, zz)| grid[x][y][z][zz])
                     .count();
-            next_grid[x][y][z] =
-                n_neighbors_active == 3 || n_neighbors_active == 2 && grid[x][y][z];
+            next_grid[x][y][z][zz] =
+                n_neighbors_active == 3 || n_neighbors_active == 2 && grid[x][y][z][zz];
         }
         grid = next_grid.clone();
     }
@@ -1092,6 +1096,7 @@ fn day17(part: Part) {
     println!(
         "{}",
         grid.iter()
+            .flatten()
             .flatten()
             .flatten()
             .filter(|&&is_active| is_active)
@@ -1134,6 +1139,7 @@ fn main() {
         day15(Part::Two);
         day16(Part::One);
         day16(Part::Two);
+        day17(Part::One);
     }
-    day17(Part::One);
+    day17(Part::Two);
 }
