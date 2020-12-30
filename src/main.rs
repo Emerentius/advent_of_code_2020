@@ -1038,6 +1038,67 @@ fn day16(part: Part) {
     }
 }
 
+fn day17(part: Part) {
+    let input = include_str!("day17_input.txt")
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|ch| match ch {
+                    '#' => true,
+                    '.' => false,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    let n_cycles = 6;
+
+    let n_width = input[0].len();
+    let n_height = input.len();
+    let n_depth = 1;
+
+    // make grid big enough to fit the result of the boot cycle
+    // 6 cycles => +6 cells in every direction that could have an active cube
+    // +1 in every direction so the adjacent cells exist as well
+    let offset = 6 + 1;
+
+    let grid_width = n_width + 2 * offset;
+    let grid_height = n_height + 2 * offset;
+    let grid_depth = n_depth + 2 * offset;
+    let mut grid = vec![vec![vec![false; grid_depth]; grid_height]; grid_width];
+
+    for (y, row) in input.iter().enumerate() {
+        for (x, &is_active) in row.iter().enumerate() {
+            grid[x + offset][y + offset][offset] = is_active;
+        }
+    }
+
+    let mut next_grid = grid.clone();
+    for _ in 0..n_cycles {
+        for (x, y, z) in
+            itertools::iproduct!(1..grid_width - 1, 1..grid_height - 1, 1..grid_depth - 1)
+        {
+            let n_neighbors_active =
+                itertools::iproduct!(x - 1..=x + 1, y - 1..=y + 1, z - 1..=z + 1)
+                    .filter(|&neighbor_pos| neighbor_pos != (x, y, z))
+                    .filter(|&(x, y, z)| grid[x][y][z])
+                    .count();
+            next_grid[x][y][z] =
+                n_neighbors_active == 3 || n_neighbors_active == 2 && grid[x][y][z];
+        }
+        grid = next_grid.clone();
+    }
+
+    println!(
+        "{}",
+        grid.iter()
+            .flatten()
+            .flatten()
+            .filter(|&&is_active| is_active)
+            .count()
+    );
+}
+
 fn main() {
     // keep solutions for old days here to avoid unused code warnings
     if false {
@@ -1072,6 +1133,7 @@ fn main() {
         day15(Part::One);
         day15(Part::Two);
         day16(Part::One);
+        day16(Part::Two);
     }
-    day16(Part::Two);
+    day17(Part::One);
 }
